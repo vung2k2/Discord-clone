@@ -1,0 +1,100 @@
+'use client';
+
+import { Controller, Form, useForm } from 'react-hook-form';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
+import * as z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Field, FieldError, FieldGroup, FieldLabel } from '../ui/field';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
+
+const formSchema = z.object({
+  name: z.string().min(1, { message: 'Server name is required' }),
+  image: z.string().min(1, { message: 'Server image is required' }),
+});
+
+export const InitialModal = () => {
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '',
+      image: '',
+    },
+  });
+
+  const isLoading = form.formState.isSubmitting;
+
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    console.log(data);
+  };
+
+  return (
+    <Dialog open={true}>
+      <DialogContent className="bg-white text-black">
+        <DialogHeader className="text-center">
+          <DialogTitle className="text-2xl font-bold">Customize Your Server</DialogTitle>
+          <DialogDescription>
+            Give your server a personality with a name and image. You can always change it later.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <FieldGroup>
+            <Controller
+              name="name"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel htmlFor="form-server-name" className="uppercase text">
+                    Server name
+                  </FieldLabel>
+                  <Input
+                    {...field}
+                    id="form-server-name"
+                    aria-invalid={fieldState.invalid}
+                    placeholder="Enter server name"
+                    autoComplete="off"
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              name="image"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel htmlFor="form-server-image">Server image</FieldLabel>
+                  <Input
+                    {...field}
+                    id="form-server-image"
+                    aria-invalid={fieldState.invalid}
+                    placeholder="Enter server image URL"
+                    autoComplete="off"
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+          </FieldGroup>
+        </form>
+        <DialogFooter className="bg-gray-200">
+          <Button
+            disabled={isLoading}
+            onClick={() => form.handleSubmit(onSubmit)()}
+            className="w-full"
+            variant="blue"
+          >
+            Create Server
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
