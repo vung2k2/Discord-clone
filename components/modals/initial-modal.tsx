@@ -14,6 +14,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Field, FieldError, FieldGroup, FieldLabel } from '../ui/field';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
+import { UploadButton } from '@/utils/uploadthing';
+import { FileUpload } from '../file-upload';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Server name is required' }),
@@ -37,15 +39,30 @@ export const InitialModal = () => {
 
   return (
     <Dialog open={true}>
-      <DialogContent className="bg-white text-black">
+      <DialogContent className="bg-[#242429] text-white">
         <DialogHeader className="text-center">
           <DialogTitle className="text-2xl font-bold">Customize Your Server</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-white">
             Give your server a personality with a name and image. You can always change it later.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
+            <Controller
+              name="image"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel htmlFor="form-server-image">Server image</FieldLabel>
+                  <FileUpload
+                    endpoint="serverImage"
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
             <Controller
               name="name"
               control={form.control}
@@ -65,26 +82,9 @@ export const InitialModal = () => {
                 </Field>
               )}
             />
-            <Controller
-              name="image"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor="form-server-image">Server image</FieldLabel>
-                  <Input
-                    {...field}
-                    id="form-server-image"
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Enter server image URL"
-                    autoComplete="off"
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
           </FieldGroup>
         </form>
-        <DialogFooter className="bg-gray-200">
+        <DialogFooter className="bg-[#242429]">
           <Button
             disabled={isLoading}
             onClick={() => form.handleSubmit(onSubmit)()}
