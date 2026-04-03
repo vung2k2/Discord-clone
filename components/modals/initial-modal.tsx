@@ -1,6 +1,6 @@
 'use client';
 
-import { Controller, Form, useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import {
   Dialog,
   DialogContent,
@@ -14,27 +14,37 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Field, FieldError, FieldGroup, FieldLabel } from '../ui/field';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { UploadButton } from '@/utils/uploadthing';
 import { FileUpload } from '../file-upload';
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Server name is required' }),
-  image: z.string().min(1, { message: 'Server image is required' }),
+  imageUrl: z.string().min(1, { message: 'Server image is required' }),
 });
 
 export const InitialModal = () => {
+  const router = useRouter();
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      image: '',
+      imageUrl: '',
     },
   });
 
   const isLoading = form.formState.isSubmitting;
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    console.log(data);
+    try {
+      await axios.post('/api/servers', data);
+      form.reset();
+      router.refresh();
+      window.location.reload();
+    } catch (error) {
+      console.error('Error creating server:', error);
+    }
   };
 
   return (
@@ -49,7 +59,7 @@ export const InitialModal = () => {
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
             <Controller
-              name="image"
+              name="imageUrl"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field>

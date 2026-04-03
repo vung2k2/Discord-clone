@@ -11,15 +11,17 @@ interface FileUploadProps {
 export const FileUpload = ({ endpoint, value, onChange }: FileUploadProps) => {
   if (value) {
     return (
-      <div className="relative  h-20 max-w-20">
-        <Image fill src={value} alt="Upload" className="rounded-full" />
-        <button
-          type="button"
-          onClick={() => onChange('')}
-          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 hover:cursor-pointer"
-        >
-          <X size={16} />
-        </button>
+      <div className="flex w-full justify-center">
+        <div className="relative h-20 w-20">
+          <Image fill src={value} alt="Upload" className="rounded-full object-cover" />
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            className="absolute -top-1 -right-1 z-10 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 hover:cursor-pointer"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
     );
   }
