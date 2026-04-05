@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const server = await db.server.create({
       data: {
         name,
-        image: imageUrl,
+        imageUrl,
         profileId: profile.id,
         inviteCode: uuidv4(),
         channels: {

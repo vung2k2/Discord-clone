@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { initProfile } from '@/lib/init-profile';
 import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 const SetupPage = async () => {
   const profile = await initProfile();
 

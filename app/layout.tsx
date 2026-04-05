@@ -3,6 +3,7 @@ import { Open_Sans } from 'next/font/google';
 import './globals.css';
 import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from '@/components/provider/theme-provider';
+import { ModalProvider } from '@/components/provider/modal-provider';
 
 const openSans = Open_Sans({
   subsets: ['latin'],
@@ -24,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider afterSignOutUrl="/">
       <html
         lang="en"
         className={`${openSans.className} h-full antialiased`}
@@ -38,6 +39,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <ModalProvider />
           </ThemeProvider>
         </body>
       </html>

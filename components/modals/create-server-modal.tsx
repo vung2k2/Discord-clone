@@ -1,6 +1,12 @@
 'use client';
 
+import { useModal } from '@/hooks/use-modal.store';
+import { ServerForm, serverFormSchema } from '@/lib/servers/validations';
+import { zodResolver } from '@hookform/resolvers/zod';
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
 import { Controller, useForm } from 'react-hook-form';
+import { FileUpload } from '../file-upload';
 import {
   Dialog,
   DialogContent,
@@ -9,18 +15,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import * as z from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Field, FieldError, FieldGroup, FieldLabel } from '../ui/field';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { FileUpload } from '../file-upload';
-import axios from 'axios';
-import { useRouter } from 'next/navigation';
-import { ServerForm, serverFormSchema } from '@/lib/servers/validations';
 
-export const InitialModal = () => {
+export function CreateServerModal() {
+  const { isOpen, closeModal, type } = useModal();
   const router = useRouter();
+
+  const isModalOpen = isOpen && type === 'createServer';
 
   const form = useForm<ServerForm>({
     resolver: zodResolver(serverFormSchema),
@@ -38,19 +41,26 @@ export const InitialModal = () => {
 
       form.reset();
       router.refresh();
-      window.location.reload();
+      closeModal();
     } catch (error) {
       console.error(error);
     }
   }
 
+  function handleClose() {
+    form.reset();
+    closeModal();
+  }
+
   return (
-    <Dialog open={true}>
-      <DialogContent className="bg-[#242429] text-white">
-        <DialogHeader className="text-center">
-          <DialogTitle className="text-2xl font-bold">Customize Your Server</DialogTitle>
-          <DialogDescription className="text-white">
-            Give your server a personality with a name and image. You can always change it later.
+    <Dialog open={isModalOpen} onOpenChange={handleClose}>
+      <DialogContent className="bg-[#242429] text-white p-4 overflow-hidden">
+        <DialogHeader className="pt-8 px-6">
+          <DialogTitle className="text-2xl text-center font-bold">
+            Customize your server
+          </DialogTitle>
+          <DialogDescription className="text-center text-zinc-500">
+            Give your server a personality with a name and an image. You can always change it later.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -99,4 +109,4 @@ export const InitialModal = () => {
       </DialogContent>
     </Dialog>
   );
-};
+}
