@@ -19,7 +19,7 @@ model Profile {
   userId    String   @unique
   name      String
   email     String   @unique
-  image     String?
+  imageUrl     String?
 
   servers   Server[]
 
