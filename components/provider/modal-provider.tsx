@@ -3,6 +3,7 @@
 import { CreateServerModal } from '../modals/create-server-modal';
 import { EditServerModal } from '../modals/edit-server-modal';
 import InviteModal from '../modals/Invite-modal';
+import MemberModal from '../modals/members-modal';
 
 export function ModalProvider() {
   return (
@@ -10,6 +11,7 @@ export function ModalProvider() {
       <CreateServerModal />
       <InviteModal />
       <EditServerModal />
+      <MemberModal />
     </>
   );
 }
