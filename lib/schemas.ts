@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import z from 'zod';
 
 export const serverFormSchema = z.object({
   name: z.string().min(1, {

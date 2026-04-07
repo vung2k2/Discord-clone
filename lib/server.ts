@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { db } from './db';
 import { Server } from '@/generated/prisma/browser';
 
 export async function getAllUserServers(profileId: string): Promise<Server[]> {

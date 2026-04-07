@@ -1,7 +1,6 @@
 'use client';
 
 import { useModal } from '@/hooks/use-modal.store';
-import { ServerForm, serverFormSchema } from '@/lib/servers/validations';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
@@ -18,9 +17,10 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from '../ui/field';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
+import { ServerForm, serverFormSchema } from '@/lib/schemas';
 
 export function CreateServerModal() {
-  const { isOpen, closeModal, type } = useModal();
+  const { isOpen, onClose, type } = useModal();
   const router = useRouter();
 
   const isModalOpen = isOpen && type === 'createServer';
@@ -41,7 +41,7 @@ export function CreateServerModal() {
 
       form.reset();
       router.refresh();
-      closeModal();
+      onClose();
     } catch (error) {
       console.error(error);
     }
@@ -49,7 +49,7 @@ export function CreateServerModal() {
 
   function handleClose() {
     form.reset();
-    closeModal();
+    onClose();
   }
 
   return (

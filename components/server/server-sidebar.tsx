@@ -1,8 +1,8 @@
-import { useCurrentProfile as currentProfile } from '@/hooks/use-current-profile';
-import { getServer } from '@/lib/servers/actions';
+import { getServer } from '@/lib/server';
 import { redirect } from 'next/navigation';
 import { ServerHeader } from './server-header';
 import { ChannelType, MemberRole } from '@/generated/prisma/enums';
+import { currentProfile } from '@/lib/current-profile';
 
 interface Props {
   serverId: string;
@@ -10,6 +10,10 @@ interface Props {
 
 export async function ServerSidebar({ serverId }: Props) {
   const profile = await currentProfile();
+
+  if (!profile) {
+    return redirect('/');
+  }
 
   const server = await getServer(serverId);
 

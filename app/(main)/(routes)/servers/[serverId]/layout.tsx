@@ -1,6 +1,7 @@
 import { ServerSidebar } from '@/components/server/server-sidebar';
-import { useCurrentProfile as getCurrentProfile } from '@/hooks/use-current-profile';
-import { findServer } from '@/lib/servers/actions';
+import { currentProfile } from '@/lib/current-profile';
+import { findServer } from '@/lib/server';
+import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { ReactNode } from 'react';
 
@@ -10,10 +11,16 @@ interface Props {
 }
 
 export default async function ServerIdLayout({ children, params }: Props) {
-  const profile = await getCurrentProfile();
   const { serverId } = await params;
+  const { redirectToSignIn } = await auth();
+  const profile = await currentProfile();
 
-  const server = await findServer(serverId, profile.id);
+  if (!profile) {
+    return redirectToSignIn();
+  }
+
+  const server = await findServer(serverId, profile?.id);
+
   if (!server) {
     return redirect('/');
   }

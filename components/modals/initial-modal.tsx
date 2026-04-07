@@ -17,7 +17,7 @@ import { Button } from '../ui/button';
 import { FileUpload } from '../file-upload';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { ServerForm, serverFormSchema } from '@/lib/servers/validations';
+import { ServerForm, serverFormSchema } from '@/lib/schemas';
 
 export const InitialModal = () => {
   const router = useRouter();

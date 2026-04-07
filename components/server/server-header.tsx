@@ -18,7 +18,7 @@ interface Props {
 }
 
 export function ServerHeader({ server, role }: Props) {
-  const { openModal } = useModal();
+  const { onOpen } = useModal();
   const isAdmin = role === MemberRole.ADMIN;
   const isModerator = isAdmin || role === MemberRole.MODERATOR;
 
@@ -34,7 +34,7 @@ export function ServerHeader({ server, role }: Props) {
         {isModerator && (
           <DropdownMenuItem
             className="text-indigo-600 dark:text-indigo-400 px-3 py-2 text-sm cursor-pointer"
-            onClick={() => openModal('invite', { server })}
+            onClick={() => onOpen('invite', { server })}
           >
             Invite People
             <UserPlus className="h-4 w-4 ml-auto" />
@@ -43,7 +43,7 @@ export function ServerHeader({ server, role }: Props) {
         {isAdmin && (
           <DropdownMenuItem
             className="px-3 py-2 text-sm cursor-pointer"
-            onClick={() => openModal('editServer', { server })}
+            onClick={() => onOpen('editServer', { server })}
           >
             Server Settings
             <Settings className="h-4 w-4 ml-auto" />
