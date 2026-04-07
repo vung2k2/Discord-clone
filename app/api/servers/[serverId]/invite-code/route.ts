@@ -3,16 +3,17 @@ import { db } from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 import { currentProfile } from '@/lib/current-profile';
 
-export async function PATCH(req: Request, { params }: { params: { serverId: string } }) {
+export async function PATCH(_req: Request, { params }: { params: Promise<{ serverId: string }> }) {
   try {
     const profile = await currentProfile();
     if (!profile) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
-    if (!params.serverId) {
+    const { serverId } = await params;
+    if (!serverId) {
       return new NextResponse('Bad Request Server Id Missing', { status: 400 });
     }
-    const { serverId } = params;
+
     const server = await db.server.update({
       where: { id: serverId, profileId: profile.id },
       data: {

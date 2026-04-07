@@ -1,7 +1,7 @@
 'use client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useModal } from '@/hooks/use-modal.store';
-import useOrigin from '@/hooks/useOrigin';
+import useOrigin from '@/hooks/use-origin';
 import axios from 'axios';
 import { Check, Copy, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
@@ -28,9 +28,9 @@ const InviteModal = () => {
   const onNew = async () => {
     try {
       setLoading(true);
-      const response = await axios.patch(`/api/server/${server?.id}/invite-code`);
+      const response = await axios.patch(`/api/servers/${server?.id}/invite-code`);
       onOpen('invite', { server: response.data });
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }
