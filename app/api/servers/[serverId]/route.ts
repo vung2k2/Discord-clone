@@ -30,13 +30,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ server
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { serverId: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ serverId: string }> }) {
   try {
     const profile = await currentProfile();
     if (!profile) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
-    const { serverId } = params;
+    const { serverId } = await params;
     if (!serverId) {
       return new NextResponse('Bad Request', { status: 400 });
     }
