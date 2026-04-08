@@ -50,7 +50,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ chann
   }
 }
 
-export async function POST(req: Request, { params }: { params: Promise<{ channelId: string }> }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ channelId: string }> }) {
   try {
     const { searchParams } = new URL(req.url);
     const { name, type } = await req.json();

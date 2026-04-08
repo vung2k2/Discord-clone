@@ -1,4 +1,4 @@
-import type { Server } from '@/generated/prisma/client';
+import type { Channel, Server } from '@/generated/prisma/client';
 import { ChannelType } from '@/generated/prisma/enums';
 import { create } from 'zustand';
 
@@ -17,7 +17,9 @@ export type ModalType =
 
 interface ModalData {
   server?: Server;
+  channel?: Channel;
   channelType?: ChannelType;
+  apiUrl?: string;
 }
 
 interface ModalStore {
