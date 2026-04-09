@@ -5,6 +5,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from '@/components/provider/theme-provider';
 import { ModalProvider } from '@/components/provider/modal-provider';
 import { SocketProvider } from '@/components/provider/socket-provider';
+import { QueryProvider } from '@/components/provider/query-provider';
 
 const openSans = Open_Sans({
   subsets: ['latin'],
@@ -39,10 +40,12 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <SocketProvider>
-              <ModalProvider />
-              {children}
-            </SocketProvider>
+            <QueryProvider>
+              <SocketProvider>
+                <ModalProvider />
+                {children}
+              </SocketProvider>
+            </QueryProvider>
           </ThemeProvider>
         </body>
       </html>

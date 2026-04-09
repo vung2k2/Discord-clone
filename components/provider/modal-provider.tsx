@@ -9,6 +9,7 @@ import { EditServerModal } from '../modals/edit-server-modal';
 import InviteModal from '../modals/Invite-modal';
 import { LeaveServerModal } from '../modals/leave-server-modal';
 import MemberModal from '../modals/members-modal';
+import { MessageFileModal } from '../modals/message-file-modal';
 
 export function ModalProvider() {
   return (
@@ -22,6 +23,7 @@ export function ModalProvider() {
       <DeleteServerModal />
       <EditChannelModal />
       <DeleteChannelModal />
+      <MessageFileModal />
     </>
   );
 }
