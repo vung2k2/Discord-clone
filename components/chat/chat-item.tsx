@@ -25,6 +25,7 @@ interface ChatItemProps {
   member: Member & { profile: Profile };
   timestamp: string;
   fileUrl: string | null;
+  fileName?: string | null;
   deleted: boolean;
   currentMember: Member;
   isUpdated: boolean;
@@ -71,6 +72,7 @@ export function ChatItem({
   member,
   timestamp,
   fileUrl,
+  fileName,
   deleted,
   currentMember,
   isUpdated,
@@ -130,16 +132,16 @@ export function ChatItem({
     form.reset({ content });
   }, [content, form]);
 
-  const fileName = fileUrl ? getFileNameFromUrl(fileUrl) : null;
-  const fileType = fileName?.split('.').pop()?.toLowerCase();
+  const fileExtension = fileName?.split('.').pop()?.toLowerCase();
 
   const isAdmin = currentMember.role === 'ADMIN';
   const isModerator = currentMember.role === 'MODERATOR';
   const isOwner = currentMember.id === member.id;
   const canDeleteMessage = !deleted && (isAdmin || isModerator || isOwner);
   const canEditMessage = !deleted && isOwner && !fileUrl;
-  const isPDF = Boolean(fileType === 'pdf' && fileUrl);
-  const isImage = Boolean(fileUrl && fileType && imageExtensions.has(fileType));
+
+  const isPDF = Boolean(fileUrl && fileExtension === 'pdf');
+  const isImage = Boolean(fileUrl && fileExtension && imageExtensions.has(fileExtension));
   const isOtherFile = Boolean(fileUrl && !isPDF && !isImage);
   const roleIcon = roleIconMap[member.role as MemberRoleType];
 
@@ -181,7 +183,7 @@ export function ChatItem({
                 rel="noopener noreferrer"
                 className="ml-2 text-sm text-indigo-500 dark:text-indigo-400 hover:underline"
               >
-                PDF File
+                {fileName}
               </a>
             </div>
           )}

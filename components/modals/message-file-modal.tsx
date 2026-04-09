@@ -21,6 +21,7 @@ import { Field, FieldGroup } from '../ui/field';
 
 const formSchema = z.object({
   fileUrl: z.string().min(1, { message: 'Attachment is required.' }),
+  fileName: z.string().optional(),
 });
 
 export function MessageFileModal() {
@@ -38,6 +39,7 @@ export function MessageFileModal() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       fileUrl: '',
+      fileName: '',
     },
   });
 
@@ -54,7 +56,11 @@ export function MessageFileModal() {
         url: apiUrl || '',
         query,
       });
-      await axios.post(url, { ...values, content: values.fileUrl });
+      await axios.post(url, {
+        fileUrl: values.fileUrl,
+        fileName: values.fileName,
+        content: values.fileUrl,
+      });
 
       form.reset();
       router.refresh();
@@ -80,14 +86,24 @@ export function MessageFileModal() {
                 <Controller
                   control={form.control}
                   name="fileUrl"
-                  render={({ field }) => (
-                    <Field>
-                      <FileUpload
-                        endpoint="messageFile"
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
-                    </Field>
+                  render={({ field: fileUrlField }) => (
+                    <Controller
+                      control={form.control}
+                      name="fileName"
+                      render={({ field: fileNameField }) => (
+                        <Field>
+                          <FileUpload
+                            endpoint="messageFile"
+                            value={fileUrlField.value}
+                            fileName={fileNameField.value}
+                            onChange={(url, fileName) => {
+                              fileUrlField.onChange(url);
+                              fileNameField.onChange(fileName || '');
+                            }}
+                          />
+                        </Field>
+                      )}
+                    />
                   )}
                 />
               </div>

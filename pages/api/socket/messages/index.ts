@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
   }
   try {
     const profile = await currentProfilePages(req);
-    const { content, fileUrl } = req.body;
+    const { content, fileUrl, fileName } = req.body;
     const { serverId, channelId } = req.query;
     if (!profile) {
       return res.status(401).json({ message: 'Unauthorized' });
@@ -63,6 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
       data: {
         content,
         fileUrl,
+        fileName,
         channelId: channelId as string,
         memberId: member.id,
       },
