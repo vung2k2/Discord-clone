@@ -35,6 +35,9 @@ const Page = async ({ params }: PageProps) => {
       serverId,
       profileId: profile.id,
     },
+    include: {
+      profile: true,
+    },
   });
   if (!channel || !member) {
     redirect('/');
@@ -63,6 +66,7 @@ const Page = async ({ params }: PageProps) => {
             type="channel"
             apiUrl="/api/socket/messages"
             query={{ serverId: channel.serverId, channelId: channel.id }}
+            currentMember={member}
           />
         </>
       )}

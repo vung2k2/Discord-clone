@@ -13,6 +13,7 @@ type MessageWithMemberWithProfile = Message & {
   member: Member & {
     profile: Profile;
   };
+  isOptimistic?: boolean;
 };
 
 type PaginatedMessages = {
@@ -68,7 +69,38 @@ export const useChatSocket = ({ addKey, updateKey, queryKey }: ChatSocketProps) 
           };
         }
 
-        const newData = [...oldData.pages];
+        const alreadyExists = oldData.pages.some((page) =>
+          page.items.some((item) => item.id === message.id),
+        );
+
+        if (alreadyExists) {
+          return oldData;
+        }
+
+        // If the server message arrives before the POST response resolves,
+        // remove one matching optimistic placeholder to avoid temporary duplicates.
+        let optimisticRemoved = false;
+        const cleanedPages = oldData.pages.map((page) => ({
+          ...page,
+          items: page.items.filter((item) => {
+            if (optimisticRemoved || !item.isOptimistic) {
+              return true;
+            }
+
+            const isSameAuthor = item.memberId === message.memberId;
+            const isSameContent = item.content === message.content;
+            const isSameFile = item.fileUrl === message.fileUrl;
+
+            if (isSameAuthor && isSameContent && isSameFile) {
+              optimisticRemoved = true;
+              return false;
+            }
+
+            return true;
+          }),
+        }));
+
+        const newData = [...cleanedPages];
 
         newData[0] = {
           ...newData[0],

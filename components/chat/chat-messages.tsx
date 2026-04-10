@@ -26,6 +26,7 @@ type MessagesWithMemberWithProfile = Message & {
   member: Member & {
     profile: Profile;
   };
+  isOptimistic?: boolean;
 };
 
 const DATE_FORMAT = 'd MMM yyyy, HH:mm';
@@ -118,6 +119,7 @@ export function ChatMessages({
                 isUpdated={message.updatedAt !== message.createdAt}
                 socketQuery={socketQuery}
                 socketUrl={socketUrl}
+                isPending={Boolean(message.isOptimistic)}
               />
             ))}
           </Fragment>

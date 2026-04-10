@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus } from 'lucide-react';
+import type { Member, Message, Profile } from '@/generated/prisma/client';
 
 import { Input } from '@/components/ui/input';
 import { useModal } from '@/hooks/use-modal.store';
@@ -18,13 +19,29 @@ interface ChatInputProps {
   query: Record<string, string>;
   name: string;
   type: 'conversation' | 'channel';
+  currentMember: Member & { profile: Profile };
 }
+
+type MessageWithMemberWithProfile = Message & {
+  member: Member & {
+    profile: Profile;
+  };
+  isOptimistic?: boolean;
+};
+
+type PaginatedMessages = {
+  pages: Array<{
+    items: MessageWithMemberWithProfile[];
+    nextCursor?: string;
+  }>;
+  pageParams?: unknown[];
+};
 
 const formSchema = z.object({
   content: z.string().min(1),
 });
 
-export const ChatInput = ({ apiUrl, query, name, type }: ChatInputProps) => {
+export const ChatInput = ({ apiUrl, query, name, type, currentMember }: ChatInputProps) => {
   const { onOpen } = useModal();
   const queryClient = useQueryClient();
 
@@ -35,29 +52,136 @@ export const ChatInput = ({ apiUrl, query, name, type }: ChatInputProps) => {
     },
   });
 
-  const isLoading = form.formState.isSubmitting;
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    const chatId = query.channelId || query.conversationId;
+    const optimisticId = `optimistic:${chatId ?? 'chat'}:${form.formState.submitCount + 1}:${values.content}`;
+    const now = new Date();
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    try {
-      const url = qs.stringifyUrl({
-        url: apiUrl,
-        query,
+    const optimisticMessage: MessageWithMemberWithProfile = {
+      id: optimisticId,
+      content: values.content,
+      fileUrl: null,
+      fileName: null,
+      deleted: false,
+      createdAt: now,
+      updatedAt: now,
+      memberId: currentMember.id,
+      channelId: query.channelId ?? '',
+      member: currentMember,
+      isOptimistic: true,
+    };
+
+    if (chatId) {
+      queryClient.setQueryData([`chat:${chatId}`], (oldData: PaginatedMessages | undefined) => {
+        if (!oldData || !oldData.pages || oldData.pages.length === 0) {
+          return {
+            pages: [
+              {
+                items: [optimisticMessage],
+              },
+            ],
+            pageParams: [undefined],
+          };
+        }
+
+        const newPages = [...oldData.pages];
+        newPages[0] = {
+          ...newPages[0],
+          items: [optimisticMessage, ...newPages[0].items],
+        };
+
+        return {
+          ...oldData,
+          pages: newPages,
+          pageParams: oldData.pageParams,
+        };
       });
-
-      await axios.post(url, values);
-
-      const chatId = query.channelId || query.conversationId;
-      if (chatId) {
-        await queryClient.invalidateQueries({ queryKey: [`chat:${chatId}`] });
-      }
-
-      form.reset();
-      requestAnimationFrame(() => {
-        form.setFocus('content');
-      });
-    } catch (error) {
-      console.log(error);
     }
+
+    form.setValue('content', '', {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+    requestAnimationFrame(() => {
+      form.setFocus('content');
+    });
+
+    void (async () => {
+      try {
+        const url = qs.stringifyUrl({
+          url: apiUrl,
+          query,
+        });
+
+        const { data } = await axios.post<MessageWithMemberWithProfile>(url, values);
+
+        if (chatId) {
+          queryClient.setQueryData([`chat:${chatId}`], (oldData: PaginatedMessages | undefined) => {
+            if (!oldData || !oldData.pages || oldData.pages.length === 0) {
+              return {
+                pages: [
+                  {
+                    items: [data],
+                  },
+                ],
+                pageParams: [undefined],
+              };
+            }
+
+            const cleanedPages = oldData.pages.map((page) => ({
+              ...page,
+              items: page.items.filter((item) => item.id !== optimisticId),
+            }));
+
+            const alreadyExists = cleanedPages.some((page) =>
+              page.items.some((item) => item.id === data.id),
+            );
+
+            if (alreadyExists) {
+              return {
+                ...oldData,
+                pages: cleanedPages,
+                pageParams: oldData.pageParams,
+              };
+            }
+
+            const newPages = [...cleanedPages];
+            newPages[0] = {
+              ...newPages[0],
+              items: [data, ...newPages[0].items],
+            };
+
+            return {
+              ...oldData,
+              pages: newPages,
+              pageParams: oldData.pageParams,
+            };
+          });
+        }
+      } catch (error) {
+        if (chatId) {
+          queryClient.setQueryData([`chat:${chatId}`], (oldData: PaginatedMessages | undefined) => {
+            if (!oldData || !oldData.pages || oldData.pages.length === 0) {
+              return oldData;
+            }
+
+            const newPages = oldData.pages.map((page) => ({
+              ...page,
+              items: page.items.filter((item) => item.id !== optimisticId),
+            }));
+
+            return {
+              ...oldData,
+              pages: newPages,
+              pageParams: oldData.pageParams,
+            };
+          });
+        }
+
+        console.log(error);
+      }
+    })();
   };
 
   return (
@@ -77,7 +201,6 @@ export const ChatInput = ({ apiUrl, query, name, type }: ChatInputProps) => {
                   <Plus className="text-white dark:text-[#313338]" />
                 </button>
                 <Input
-                  disabled={isLoading}
                   className="px-14 py-6 bg-zinc-200/90 dark:bg-zinc-700/75 border-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-zinc-600 dark:text-zinc-200"
                   placeholder={`Message ${type === 'conversation' ? name : '#' + name}`}
                   {...field}

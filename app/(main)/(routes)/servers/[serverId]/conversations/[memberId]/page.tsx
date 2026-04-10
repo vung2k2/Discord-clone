@@ -75,6 +75,7 @@ export default async function MemberIdPage({ params, searchParams: { video } }: 
             query={{
               conversationId: conversation.id,
             }}
+            currentMember={currentMember}
           />
         </>
       )}

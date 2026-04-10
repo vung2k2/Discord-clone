@@ -31,6 +31,7 @@ interface ChatItemProps {
   isUpdated: boolean;
   socketUrl: string;
   socketQuery: Record<string, string>;
+  isPending?: boolean;
 }
 
 type MemberRoleType = 'GUEST' | 'MODERATOR' | 'ADMIN';
@@ -59,6 +60,7 @@ export function ChatItem({
   isUpdated,
   socketUrl,
   socketQuery,
+  isPending = false,
 }: ChatItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const { onOpen } = useModal();
@@ -118,8 +120,8 @@ export function ChatItem({
   const isAdmin = currentMember.role === 'ADMIN';
   const isModerator = currentMember.role === 'MODERATOR';
   const isOwner = currentMember.id === member.id;
-  const canDeleteMessage = !deleted && (isAdmin || isModerator || isOwner);
-  const canEditMessage = !deleted && isOwner && !fileUrl;
+  const canDeleteMessage = !isPending && !deleted && (isAdmin || isModerator || isOwner);
+  const canEditMessage = !isPending && !deleted && isOwner && !fileUrl;
 
   const isPDF = Boolean(fileUrl && fileExtension === 'pdf');
   const isImage = Boolean(fileUrl && fileExtension && imageExtensions.has(fileExtension));
@@ -127,7 +129,12 @@ export function ChatItem({
   const roleIcon = roleIconMap[member.role as MemberRoleType];
 
   return (
-    <div className="relative group flex items-center hover:bg-black/5 p-4 transition w-full">
+    <div
+      className={cn(
+        'relative group flex items-center hover:bg-black/5 p-4 transition w-full',
+        isPending && 'opacity-60',
+      )}
+    >
       <div className="group flex gap-x-2 items-center w-full">
         <div onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition">
           <UserAvatar src={member.profile.imageUrl ?? undefined} />
