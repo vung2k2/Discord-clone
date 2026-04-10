@@ -17,18 +17,36 @@ export function MediaRoom({ chatId, video, audio }: MediaRoomProps) {
   const [token, setToken] = useState('');
 
   useEffect(() => {
-    if (!user?.firstName) return;
+    if (!user?.id) return;
+    const identity = user.id;
+    const displayName = user.firstName ?? user.username ?? user.id;
 
     (async () => {
       try {
-        const response = await fetch(`/api/livekit?room=${chatId}&username=${user.firstName}`);
+        const query = new URLSearchParams({
+          room: chatId,
+          identity,
+          name: displayName,
+        });
+        const response = await fetch(`/api/livekit?${query.toString()}`);
+
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          throw new Error(errorPayload?.error ?? 'Failed to create LiveKit token');
+        }
+
         const data = await response.json();
+
+        if (typeof data.token !== 'string') {
+          throw new Error('Invalid LiveKit token payload');
+        }
+
         setToken(data.token);
       } catch (error) {
         console.error(error);
       }
     })();
-  }, [user?.firstName, chatId]);
+  }, [user?.id, user?.firstName, user?.username, chatId]);
 
   if (token === '')
     return (
