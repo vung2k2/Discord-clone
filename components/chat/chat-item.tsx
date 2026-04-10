@@ -47,25 +47,6 @@ const formSchema = z.object({
 
 const imageExtensions = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'avif']);
 
-const getFileNameFromUrl = (url: string) => {
-  try {
-    const parsedUrl = new URL(url);
-    const fileNameFromQuery =
-      parsedUrl.searchParams.get('x-ut-file-name') || parsedUrl.searchParams.get('filename');
-
-    if (fileNameFromQuery) {
-      return decodeURIComponent(fileNameFromQuery);
-    }
-
-    const pathSegments = decodeURIComponent(parsedUrl.pathname).split('/').filter(Boolean);
-    return pathSegments[pathSegments.length - 1] || 'attachment';
-  } catch {
-    const cleanUrl = url.split('?')[0];
-    const pathSegments = cleanUrl.split('/').filter(Boolean);
-    return decodeURIComponent(pathSegments[pathSegments.length - 1] || 'attachment');
-  }
-};
-
 export function ChatItem({
   id,
   content,
@@ -247,7 +228,7 @@ export function ChatItem({
         </div>
       </div>
       {canDeleteMessage && (
-        <div className="hidden group-hover:flex items-center gap-x-2 absolute p-1 -top-2 right-5 bg-white dark:bg-zinc-800 border rounded-sm">
+        <div className="hidden group-hover:flex! items-center gap-x-2 absolute p-1 -top-2 right-5 bg-white dark:bg-zinc-800 border rounded-sm">
           {canEditMessage && (
             <ActionTooltip label="Edit">
               <Edit
