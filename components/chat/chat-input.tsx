@@ -52,6 +52,9 @@ export const ChatInput = ({ apiUrl, query, name, type }: ChatInputProps) => {
       }
 
       form.reset();
+      requestAnimationFrame(() => {
+        form.setFocus('content');
+      });
     } catch (error) {
       console.log(error);
     }

@@ -1,4 +1,4 @@
-import { currentProfilePages } from '@/lib/currentProfilePage';
+import { currentProfilePages } from '@/lib/current-profile-page';
 import { db } from '@/lib/db';
 import { NextApiResponseServerIO } from '@/types/server-type';
 import { NextApiRequest } from 'next';
