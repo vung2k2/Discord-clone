@@ -84,9 +84,9 @@ export function CreateChannelModal() {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-[#242429] text-white p-4 overflow-hidden">
-        <DialogHeader className="pt-8 px-6">
-          <DialogTitle className="text-2xl text-left font-bold">Create New Channel</DialogTitle>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create New Channel</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup className="pb-4">
@@ -138,7 +138,7 @@ export function CreateChannelModal() {
               )}
             />
           </FieldGroup>
-          <DialogFooter className="bg-[#242429]">
+          <DialogFooter>
             <Button disabled={isLoading} className="w-full" variant="blue">
               Create
             </Button>

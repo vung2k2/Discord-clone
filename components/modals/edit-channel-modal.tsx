@@ -79,11 +79,11 @@ export const EditChannelModal = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-[#242429] text-white p-4 overflow-hidden">
-        <DialogHeader className="pt-8 px-6">
-          <DialogTitle className="text-2xl text-center font-bold">Edit Channel</DialogTitle>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Channel</DialogTitle>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
             <Controller
               control={form.control}
@@ -130,7 +130,7 @@ export const EditChannelModal = () => {
               )}
             />
           </FieldGroup>
-          <DialogFooter className="bg-[#242429]">
+          <DialogFooter>
             <Button disabled={isLoading} className="w-full" variant="blue">
               Save
             </Button>

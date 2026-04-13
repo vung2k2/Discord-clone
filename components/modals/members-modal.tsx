@@ -90,9 +90,9 @@ const MemberModal = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white dark:bg-[#1e1f22] text-black dark:text-white overflow-hidden">
+      <DialogContent>
         <DialogHeader className="pt-4 px-2 flex flex-col items-center">
-          <DialogTitle className="text-2xl text-left font-bold">Manage Members</DialogTitle>
+          <DialogTitle>Manage Members</DialogTitle>
           <DialogDescription className="text-left text-zinc-500">
             {server?.members?.length} Members
           </DialogDescription>

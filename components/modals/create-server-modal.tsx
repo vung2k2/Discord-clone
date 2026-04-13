@@ -54,9 +54,9 @@ export function CreateServerModal() {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-[#242429] text-white p-4 overflow-hidden">
-        <DialogHeader className="pt-8 px-6">
-          <DialogTitle className="text-2xl text-center font-bold">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
             Customize your server
           </DialogTitle>
           <DialogDescription className="text-center text-zinc-500">
@@ -100,7 +100,7 @@ export function CreateServerModal() {
               )}
             />
           </FieldGroup>
-          <DialogFooter className="bg-[#242429]">
+          <DialogFooter>
             <Button disabled={isLoading} className="w-full" variant="blue">
               Create Server
             </Button>

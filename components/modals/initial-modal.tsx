@@ -46,9 +46,9 @@ export const InitialModal = () => {
 
   return (
     <Dialog open={true}>
-      <DialogContent className="bg-[#242429] text-white">
+      <DialogContent>
         <DialogHeader className="text-center">
-          <DialogTitle className="text-2xl font-bold">Customize Your Server</DialogTitle>
+          <DialogTitle>Customize Your Server</DialogTitle>
           <DialogDescription className="text-white">
             Give your server a personality with a name and image. You can always change it later.
           </DialogDescription>
@@ -90,7 +90,7 @@ export const InitialModal = () => {
               )}
             />
           </FieldGroup>
-          <DialogFooter className="bg-[#242429]">
+          <DialogFooter>
             <Button disabled={isLoading} className="w-full" variant="blue">
               Create Server
             </Button>

@@ -38,13 +38,13 @@ const InviteModal = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white dark:bg-[#1e1f22] text-black dark:text-white p-0 overflow-hidden">
-        <DialogHeader className="pt-8 px-6">
-          <DialogTitle className="text-2xl text-left font-bold">
+      <DialogContent>
+        <DialogHeader className="pt-8">
+          <DialogTitle>
             Invite Friends To <span className="text-indigo-500">{server?.name}</span>
           </DialogTitle>
         </DialogHeader>
-        <div className="p-6">
+        <div>
           <Label className="uppercase text-xs font-bold text-zinc-800 dark:text-zinc-400">
             Server Invite Link
           </Label>
