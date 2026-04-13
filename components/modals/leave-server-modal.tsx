@@ -37,15 +37,15 @@ export function LeaveServerModal() {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#242429] text-white p-4 overflow-hidden">
-        <DialogHeader className="pt-8 px-6">
-          <DialogTitle className="text-2xl text-center font-bold">Leave Server</DialogTitle>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Leave Server</DialogTitle>
           <DialogDescription className="text-center text-zinc-500">
             Are you sure you want to leave{' '}
             <span className="font-semibold text-indigo-500">{server?.name}</span>?
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="bg-[#242429]">
+        <DialogFooter>
           <div className="flex items-center justify-between w-full">
             <Button disabled={loading} onClick={onClose} variant="ghost">
               Cancel

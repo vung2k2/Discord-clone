@@ -48,22 +48,22 @@ export function DeleteMessageModal() {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#242429] text-white p-4 overflow-hidden">
-        <DialogHeader className="pt-8 px-6">
-          <DialogTitle className="text-2xl text-center font-bold">Delete Message</DialogTitle>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Message</DialogTitle>
           <DialogDescription className="text-center text-zinc-500">
             Are you sure you want to do this?
             <br />
             The message will be permanently deleted.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="bg-[#242429]">
+        <DialogFooter>
           <div className="flex items-center justify-between w-full">
             <Button variant="ghost" disabled={isLoading} onClick={onClose}>
               Cancel
             </Button>
             <Button variant="blue" disabled={isLoading} onClick={onClick}>
-              Confirm
+              Delete
             </Button>
           </div>
         </DialogFooter>

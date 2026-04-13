@@ -63,11 +63,9 @@ export function EditServerModal() {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-[#242429] text-white p-4 overflow-hidden">
-        <DialogHeader className="pt-8 px-6">
-          <DialogTitle className="text-2xl text-center font-bold">
-            Customize your server
-          </DialogTitle>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Customize your server</DialogTitle>
           <DialogDescription className="text-center text-zinc-500">
             Give your server a personality with a name and an image. You can always change it later.
           </DialogDescription>
@@ -109,7 +107,7 @@ export function EditServerModal() {
               )}
             />
           </FieldGroup>
-          <DialogFooter className="bg-[#242429]">
+          <DialogFooter>
             <Button disabled={isLoading} className="w-full" variant="blue">
               Save
             </Button>
