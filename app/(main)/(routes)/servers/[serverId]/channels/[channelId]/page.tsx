@@ -30,6 +30,13 @@ const Page = async ({ params }: PageProps) => {
     where: {
       id: channelId,
     },
+    include: {
+      server: {
+        select: {
+          name: true,
+        },
+      },
+    },
   });
   const member = await db.member.findFirst({
     where: {
@@ -45,7 +52,13 @@ const Page = async ({ params }: PageProps) => {
   }
   return (
     <div className="bg-white dark:bg-[#313338] flex flex-col h-full">
-      <ChatHeader name={channel.name} serverId={channel.serverId} type="channel" />
+      <ChatHeader
+        name={channel.name}
+        serverName={channel.server.name}
+        serverId={channel.serverId}
+        type="channel"
+        searchScope={{ serverId: channel.serverId }}
+      />
       {channel.type === ChannelType.TEXT && (
         <>
           <ChatMessages

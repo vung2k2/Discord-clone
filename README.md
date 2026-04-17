@@ -1,5 +1,62 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Elasticsearch Setup (Message Search)
+
+### 1) Configure environment variables
+
+Add these variables to your `.env`:
+
+```bash
+ELASTICSEARCH_NODE=http://localhost:9200
+ELASTICSEARCH_INDEX_MESSAGES=discord_messages
+```
+
+### 2) Start services with Docker Compose
+
+```bash
+docker compose up -d elasticsearch
+```
+
+To start everything:
+
+```bash
+docker compose up -d
+```
+
+### 3) Install dependencies
+
+```bash
+npm install
+```
+
+### 4) Run app
+
+```bash
+npm run dev
+```
+
+### 5) Search endpoint
+
+`GET /api/elasticsearch/messages`
+
+Query params:
+
+- `q` (required): text to search
+- `channelId` or `conversationId` (required): chat scope
+- `limit` (optional): max number of results, default `20`, max `50`
+
+Examples:
+
+```bash
+GET /api/elasticsearch/messages?q=hello&channelId=<channel-id>
+GET /api/elasticsearch/messages?q=report&conversationId=<conversation-id>&limit=30
+```
+
+Notes:
+
+- New/updated/deleted messages are indexed automatically from socket message APIs.
+- Search only returns records the current authenticated user is authorized to view.
+
 ## Getting Started
 
 First, run the development server:

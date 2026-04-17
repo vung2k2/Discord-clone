@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { NextApiResponseServerIO } from '@/types/server-type';
 import { currentProfilePages } from '@/lib/current-profile-page';
 import { MemberRole } from '@/generated/prisma/enums';
+import { indexDirectMessage } from '@/lib/message-search';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponseServerIO) {
   if (req.method !== 'DELETE' && req.method !== 'PATCH')
@@ -100,6 +101,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
           },
         },
       });
+    }
+
+    try {
+      await indexDirectMessage({
+        messageId: directMessage.id,
+        conversationId: conversation.id,
+        memberId: directMessage.memberId,
+        profileId: directMessage.member.profileId,
+        content: directMessage.content,
+        fileName: null,
+        fileUrl: directMessage.fileUrl,
+        deleted: directMessage.deleted,
+        createdAt: directMessage.createdAt,
+        updatedAt: directMessage.updatedAt,
+      });
+    } catch (indexError) {
+      console.error('[DIRECT_MESSAGE_UPDATE_INDEX_ERROR]', indexError);
     }
 
     const updateKey = `chat:${conversation.id}:messages:update`;

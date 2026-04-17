@@ -37,6 +37,17 @@ export default async function MemberIdPage({ params, searchParams }: MemberIdPag
 
   if (!currentMember) return redirect('/');
 
+  const server = await db.server.findUnique({
+    where: {
+      id: serverId,
+    },
+    select: {
+      name: true,
+    },
+  });
+
+  if (!server) return redirect('/');
+
   const conversation = await getOrCreateConversation(currentMember.id, memberId);
 
   if (!conversation) return redirect(`/servers/${serverId}`);
@@ -50,8 +61,10 @@ export default async function MemberIdPage({ params, searchParams }: MemberIdPag
       <ChatHeader
         imageUrl={otherMember.profile.imageUrl || undefined}
         name={otherMember.profile.name}
+        serverName={server.name}
         serverId={serverId}
         type="conversation"
+        searchScope={{ serverId }}
       />
       {video && <MediaRoom chatId={conversation.id} video audio />}
       {!video && (

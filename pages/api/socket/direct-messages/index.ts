@@ -2,6 +2,7 @@ import { NextApiRequest } from 'next';
 
 import { db } from '@/lib/db';
 import { currentProfilePages } from '@/lib/current-profile-page';
+import { indexDirectMessage } from '@/lib/message-search';
 import { NextApiResponseServerIO } from '@/types/server-type';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponseServerIO) {
@@ -57,6 +58,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
         },
       },
     });
+
+    try {
+      await indexDirectMessage({
+        messageId: message.id,
+        conversationId: conversation.id,
+        memberId: message.memberId,
+        profileId: message.member.profileId,
+        content: message.content,
+        fileName: null,
+        fileUrl: message.fileUrl,
+        deleted: message.deleted,
+        createdAt: message.createdAt,
+        updatedAt: message.updatedAt,
+      });
+    } catch (indexError) {
+      console.error('[DIRECT_MESSAGE_INDEX_ERROR]', indexError);
+    }
 
     const channelKey = `chat:${conversationId}:messages`;
 

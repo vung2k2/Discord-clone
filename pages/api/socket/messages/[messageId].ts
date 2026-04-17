@@ -1,6 +1,7 @@
 import { MemberRole } from '@/generated/prisma/enums';
 import { currentProfilePages } from '@/lib/current-profile-page';
 import { db } from '@/lib/db';
+import { indexChannelMessage } from '@/lib/message-search';
 import { NextApiResponseServerIO } from '@/types/server-type';
 import { NextApiRequest } from 'next';
 
@@ -122,6 +123,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
           },
         },
       });
+    }
+
+    try {
+      await indexChannelMessage({
+        messageId: message.id,
+        serverId: server.id,
+        channelId: channel.id,
+        memberId: message.memberId,
+        profileId: message.member.profileId,
+        content: message.content,
+        fileName: message.fileName,
+        fileUrl: message.fileUrl,
+        deleted: message.deleted,
+        createdAt: message.createdAt,
+        updatedAt: message.updatedAt,
+      });
+    } catch (indexError) {
+      console.error('[MESSAGE_UPDATE_INDEX_ERROR]', indexError);
     }
 
     const updateKey = `chat:${channelId}:messages:update`;
