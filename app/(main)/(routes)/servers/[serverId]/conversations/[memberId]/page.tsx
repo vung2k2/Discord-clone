@@ -57,7 +57,7 @@ export default async function MemberIdPage({ params, searchParams }: MemberIdPag
   const otherMember = memberOne.profileId === profile.id ? memberTwo : memberOne;
 
   return (
-    <div className="bg-white dark:bg-[#313338] flex flex-col h-full">
+    <div className="bg-white dark:bg-[#313338] flex h-full flex-col">
       <ChatHeader
         imageUrl={otherMember.profile.imageUrl || undefined}
         name={otherMember.profile.name}
@@ -68,7 +68,7 @@ export default async function MemberIdPage({ params, searchParams }: MemberIdPag
       />
       {video && <MediaRoom chatId={conversation.id} video audio />}
       {!video && (
-        <>
+        <div className="flex min-h-0 flex-1 flex-col transition-[padding] duration-200 sm:pr-(--chat-search-panel-width)">
           <ChatMessages
             member={currentMember}
             name={otherMember.profile.name}
@@ -91,7 +91,7 @@ export default async function MemberIdPage({ params, searchParams }: MemberIdPag
             }}
             currentMember={currentMember}
           />
-        </>
+        </div>
       )}
     </div>
   );

@@ -51,7 +51,7 @@ const Page = async ({ params }: PageProps) => {
     redirect('/');
   }
   return (
-    <div className="bg-white dark:bg-[#313338] flex flex-col h-full">
+    <div className="bg-white dark:bg-[#313338] flex h-full flex-col">
       <ChatHeader
         name={channel.name}
         serverName={channel.server.name}
@@ -60,7 +60,7 @@ const Page = async ({ params }: PageProps) => {
         searchScope={{ serverId: channel.serverId }}
       />
       {channel.type === ChannelType.TEXT && (
-        <>
+        <div className="flex min-h-0 flex-1 flex-col transition-[padding] duration-200 sm:pr-(--chat-search-panel-width)">
           <ChatMessages
             member={member}
             name={channel.name}
@@ -82,7 +82,7 @@ const Page = async ({ params }: PageProps) => {
             query={{ serverId: channel.serverId, channelId: channel.id }}
             currentMember={member}
           />
-        </>
+        </div>
       )}
       {channel.type === ChannelType.AUDIO && (
         <MediaRoom chatId={channel.id} video={false} audio={true} />

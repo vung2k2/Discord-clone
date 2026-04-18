@@ -1,11 +1,20 @@
 'use client';
 
-import { FormEvent, KeyboardEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, Fragment, KeyboardEvent, useEffect, useMemo, useState } from 'react';
 import { Loader2, Search, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import {
   Select,
   SelectContent,
@@ -40,6 +49,17 @@ type SearchResultItem = {
   channelName: string | null;
 };
 
+type SearchResponse = {
+  items?: SearchResultItem[];
+  pagination?: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+  };
+};
+
 interface ChatSearchProps {
   type: 'channel' | 'conversation';
   name: string;
@@ -49,6 +69,8 @@ interface ChatSearchProps {
 }
 
 type FilterMenuView = 'root' | 'from' | 'in';
+
+const SEARCH_PAGE_SIZE = 10;
 
 const highlightText = (text: string, query: string) => {
   const keyword = query.trim();
@@ -70,6 +92,18 @@ const highlightText = (text: string, query: string) => {
   );
 };
 
+const buildVisiblePages = (currentPage: number, totalPages: number) => {
+  if (totalPages <= 0) {
+    return [] as number[];
+  }
+
+  const pages = new Set<number>([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+
+  return Array.from(pages)
+    .filter((page) => page >= 1 && page <= totalPages)
+    .sort((a, b) => a - b);
+};
+
 export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatSearchProps) => {
   const [searchValue, setSearchValue] = useState('');
   const [submittedQuery, setSubmittedQuery] = useState('');
@@ -84,6 +118,9 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
   const [selectedFromUser, setSelectedFromUser] = useState<FilterUser | null>(null);
   const [selectedInChannel, setSelectedInChannel] = useState<FilterChannel | null>(null);
   const [sortBy, setSortBy] = useState<SortBy>('relevance');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [error, setError] = useState('');
 
   const canSearch = Boolean(
@@ -116,6 +153,9 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
     setSelectedFromUser(null);
     setSelectedInChannel(null);
     setSortBy('relevance');
+    setCurrentPage(1);
+    setTotalResults(0);
+    setTotalPages(0);
     setFilterUsers([]);
     setFilterChannels([]);
   }, [scopeKey]);
@@ -161,11 +201,21 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
     isSearchPanelOpen &&
     (Boolean(submittedQuery.trim()) || Boolean(selectedFromUser || selectedInChannel));
 
+  useEffect(() => {
+    const panelWidth = shouldShowPanel ? '360px' : '0px';
+    document.documentElement.style.setProperty('--chat-search-panel-width', panelWidth);
+
+    return () => {
+      document.documentElement.style.setProperty('--chat-search-panel-width', '0px');
+    };
+  }, [shouldShowPanel]);
+
   const executeSearch = async (args: {
     query: string;
     fromUser: FilterUser | null;
     inChannel: FilterChannel | null;
     sort: SortBy;
+    page: number;
   }) => {
     const params = createSearchParams({
       query: args.query,
@@ -174,6 +224,8 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
       inChannel: args.inChannel,
       sortBy: args.sort,
     });
+    params.set('limit', String(SEARCH_PAGE_SIZE));
+    params.set('page', String(args.page));
 
     const response = await fetch(`/api/elasticsearch/messages?${params.toString()}`);
 
@@ -181,11 +233,10 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
       throw new Error('Search request failed');
     }
 
-    const data = (await response.json()) as { items?: SearchResultItem[] };
-    return data.items || [];
+    return (await response.json()) as SearchResponse;
   };
 
-  const runSearch = async (sortOverride?: SortBy) => {
+  const runSearch = async (sortOverride?: SortBy, pageOverride = 1) => {
     if (!canSearch) {
       return;
     }
@@ -197,6 +248,9 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
       setSubmittedQuery('');
       setResults([]);
       setError('');
+      setCurrentPage(1);
+      setTotalResults(0);
+      setTotalPages(0);
       setIsSearchPanelOpen(false);
       return;
     }
@@ -211,22 +265,31 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
         fromUser: selectedFromUser,
         inChannel: selectedInChannel,
         sort: sortOverride || sortBy,
+        page: pageOverride,
       });
 
-      pushSearchHistory({
-        query,
-        fromUser: selectedFromUser,
-        inChannel: selectedInChannel,
-      });
+      if (pageOverride === 1) {
+        pushSearchHistory({
+          query,
+          fromUser: selectedFromUser,
+          inChannel: selectedInChannel,
+        });
+      }
 
       setSubmittedQuery(query);
-      setResults(items);
+      setResults(items.items || []);
+      setCurrentPage(items.pagination?.page || pageOverride);
+      setTotalResults(items.pagination?.total || 0);
+      setTotalPages(items.pagination?.totalPages || 0);
       setIsSearchPanelOpen(true);
     } catch (searchError) {
       console.error('[CHAT_SEARCH_ERROR]', searchError);
       setSubmittedQuery(query);
       setResults([]);
       setError('Search failed. Please try again.');
+      setCurrentPage(pageOverride);
+      setTotalResults(0);
+      setTotalPages(0);
       setIsSearchPanelOpen(true);
     } finally {
       setIsSearching(false);
@@ -268,16 +331,23 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
         fromUser,
         inChannel,
         sort: sortBy,
+        page: 1,
       });
 
       setSubmittedQuery(query);
-      setResults(items);
+      setResults(items.items || []);
+      setCurrentPage(items.pagination?.page || 1);
+      setTotalResults(items.pagination?.total || 0);
+      setTotalPages(items.pagination?.totalPages || 0);
       setIsSearchPanelOpen(true);
     } catch (searchError) {
       console.error('[CHAT_SEARCH_HISTORY_ERROR]', searchError);
       setSubmittedQuery(query);
       setResults([]);
       setError('Search failed. Please try again.');
+      setCurrentPage(1);
+      setTotalResults(0);
+      setTotalPages(0);
       setIsSearchPanelOpen(true);
     } finally {
       setIsSearching(false);
@@ -304,8 +374,16 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
     setSortBy(value);
 
     if (isSearchPanelOpen) {
-      void runSearch(value);
+      void runSearch(value, 1);
     }
+  };
+
+  const onChangePage = (page: number) => {
+    if (page < 1 || (totalPages > 0 && page > totalPages) || isSearching) {
+      return;
+    }
+
+    void runSearch(undefined, page);
   };
 
   const clearSearch = () => {
@@ -317,6 +395,9 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
     setFilterMenuView('root');
     setSelectedFromUser(null);
     setSelectedInChannel(null);
+    setCurrentPage(1);
+    setTotalResults(0);
+    setTotalPages(0);
   };
 
   const onSearchInputChange = (value: string) => {
@@ -334,6 +415,9 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
       setIsSearchPanelOpen(false);
       setSelectedFromUser(null);
       setSelectedInChannel(null);
+      setCurrentPage(1);
+      setTotalResults(0);
+      setTotalPages(0);
     }
   };
 
@@ -355,6 +439,9 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
     setIsSearchPanelOpen(false);
     setFilterMenuView('root');
     setIsFilterMenuOpen(true);
+    setCurrentPage(1);
+    setTotalResults(0);
+    setTotalPages(0);
   };
 
   const chooseInChannel = (channel: FilterChannel) => {
@@ -366,6 +453,9 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
     setIsSearchPanelOpen(false);
     setFilterMenuView('root');
     setIsFilterMenuOpen(true);
+    setCurrentPage(1);
+    setTotalResults(0);
+    setTotalPages(0);
   };
 
   if (!canSearch) {
@@ -408,7 +498,7 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
             align="start"
             side="bottom"
             sideOffset={8}
-            className="w-[320px] gap-0 p-0 sm:w-[420px]"
+            className="w-[320px] gap-0 p-0 sm:w-105"
             onOpenAutoFocus={(event) => event.preventDefault()}
           >
             <ChatSearchFilterMenu
@@ -433,11 +523,11 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
       </Popover>
 
       {shouldShowPanel && (
-        <aside className="fixed top-12 right-0 bottom-0 z-40 w-full border-l border-neutral-200 bg-zinc-100 transition-transform duration-200 dark:border-neutral-800 dark:bg-[#2b2d31] sm:w-[360px]">
+        <aside className="fixed top-12 right-0 bottom-0 z-40 w-full border-l border-neutral-200 bg-zinc-100 transition-transform duration-200 dark:border-neutral-800 dark:bg-[#2b2d31] sm:w-90">
           <div className="flex h-full flex-col">
             <div className="flex h-12 items-center border-b border-neutral-200 px-4 dark:border-neutral-800">
               <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-                {isSearching ? 'Searching...' : `${results.length} Results`}
+                {isSearching ? 'Searching...' : `${totalResults} Results`}
               </p>
               <div className="ml-auto w-36">
                 <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortBy)}>
@@ -513,12 +603,65 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
                       </p>
                     )}
 
-                    <p className="break-words text-sm text-zinc-700 dark:text-zinc-200">
+                    <p className="wrap-break-word text-sm text-zinc-700 dark:text-zinc-200">
                       {highlightText(item.content || '(attachment)', submittedQuery)}
                     </p>
                   </div>
                 ))}
             </div>
+
+            {totalPages > 1 && (
+              <div className="border-t border-neutral-200 px-2 py-2 dark:border-neutral-800">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        type="button"
+                        onClick={() => onChangePage(currentPage - 1)}
+                        disabled={currentPage <= 1 || isSearching}
+                      />
+                    </PaginationItem>
+
+                    {(() => {
+                      const visiblePages = buildVisiblePages(currentPage, totalPages);
+
+                      return visiblePages.map((page, index) => {
+                        const prevPage = visiblePages[index - 1];
+
+                        return (
+                          <Fragment key={page}>
+                            {index > 0 && prevPage && page - prevPage > 1 && (
+                              <PaginationItem>
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            )}
+
+                            <PaginationItem>
+                              <PaginationLink
+                                type="button"
+                                isActive={page === currentPage}
+                                onClick={() => onChangePage(page)}
+                                disabled={isSearching}
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          </Fragment>
+                        );
+                      });
+                    })()}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        type="button"
+                        onClick={() => onChangePage(currentPage + 1)}
+                        disabled={currentPage >= totalPages || isSearching}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </div>
         </aside>
       )}

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { estypes } from '@elastic/elasticsearch';
 
 import { currentProfile } from '@/lib/current-profile';
 import { db } from '@/lib/db';
@@ -54,7 +55,10 @@ export async function GET(req: Request) {
     const inChannelId = searchParams.get('inChannelId');
     const sortByParam = searchParams.get('sortBy');
     const rawLimit = Number(searchParams.get('limit') || '20');
+    const rawPage = Number(searchParams.get('page') || '1');
     const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 50) : 20;
+    const page = Number.isFinite(rawPage) ? Math.max(rawPage, 1) : 1;
+    const from = (page - 1) * limit;
     const sortBy: SortBy =
       sortByParam === 'newest' || sortByParam === 'oldest' ? sortByParam : 'relevance';
 
@@ -197,7 +201,7 @@ export async function GET(req: Request) {
     const normalizedQuery = q?.trim() || '';
     const useMatchAll = normalizedQuery === '*' || normalizedQuery.length === 0;
 
-    const query = useMatchAll
+    const query: estypes.QueryDslQueryContainer = useMatchAll
       ? {
           bool: {
             filter,
@@ -235,7 +239,7 @@ export async function GET(req: Request) {
           },
         };
 
-    const sort =
+    const sort: estypes.Sort =
       sortBy === 'newest'
         ? [{ createdAt: { order: 'desc' as const } }]
         : sortBy === 'oldest'
@@ -244,6 +248,7 @@ export async function GET(req: Request) {
 
     const result = await elasticsearch.search<MessageSearchHit>({
       index: MESSAGE_SEARCH_INDEX,
+      from,
       size: limit,
       track_scores: true,
       query,
@@ -254,8 +259,22 @@ export async function GET(req: Request) {
       .map((hit) => hit._source)
       .filter((hit): hit is MessageSearchHit => Boolean(hit));
 
+    const totalHits =
+      typeof result.hits.total === 'number' ? result.hits.total : (result.hits.total?.value ?? 0);
+    const totalPages = totalHits > 0 ? Math.ceil(totalHits / limit) : 0;
+    const hasNextPage = page < totalPages;
+
     if (hits.length === 0) {
-      return NextResponse.json({ items: [] });
+      return NextResponse.json({
+        items: [],
+        pagination: {
+          page,
+          pageSize: limit,
+          total: totalHits,
+          totalPages,
+          hasNextPage: false,
+        },
+      });
     }
 
     const memberIds = Array.from(new Set(hits.map((hit) => hit.memberId)));
@@ -316,7 +335,16 @@ export async function GET(req: Request) {
       channelName: hit.channelId ? channelMap.get(hit.channelId) || null : null,
     }));
 
-    return NextResponse.json({ items });
+    return NextResponse.json({
+      items,
+      pagination: {
+        page,
+        pageSize: limit,
+        total: totalHits,
+        totalPages,
+        hasNextPage,
+      },
+    });
   } catch (error) {
     console.error('[ELASTICSEARCH_MESSAGES_GET]', error);
     return new NextResponse('Internal Error', { status: 500 });
