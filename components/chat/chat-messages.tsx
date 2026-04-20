@@ -20,6 +20,7 @@ interface ChatMessagesProps {
   paramKey: 'channelId' | 'conversationId';
   paramValue: string;
   type: 'channel' | 'conversation';
+  messageId?: string;
 }
 
 type MessagesWithMemberWithProfile = Message & {
@@ -41,6 +42,7 @@ export function ChatMessages({
   paramKey,
   paramValue,
   type,
+  messageId,
 }: ChatMessagesProps) {
   const queryKey = `chat:${chatId}`;
   const addKey = `chat:${chatId}:messages`;
@@ -49,11 +51,22 @@ export function ChatMessages({
   const chatRef = useRef<ElementRef<'div'>>(null);
   const bottomRef = useRef<ElementRef<'div'>>(null);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useChatQuery({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchPreviousPage,
+    hasPreviousPage,
+    isFetchingPreviousPage,
+    status,
+    highlightedMessageId,
+  } = useChatQuery({
     queryKey,
     apiUrl,
     paramKey,
     paramValue,
+    targetMessageId: messageId,
   });
   useChatSocket({
     queryKey,
@@ -63,8 +76,11 @@ export function ChatMessages({
   useChatScroll({
     chatRef,
     bottomRef,
-    loadMore: fetchNextPage,
-    shouldLoadMore: !isFetchingNextPage && !!hasNextPage,
+    loadMoreTop: fetchNextPage,
+    shouldLoadMoreTop: !isFetchingNextPage && !!hasNextPage,
+    loadMoreBottom: fetchPreviousPage,
+    shouldLoadMoreBottom: !isFetchingPreviousPage && !!hasPreviousPage,
+    autoScrollToBottom: !messageId,
     count: data?.pages?.reduce((total, page) => total + page.items.length, 0) ?? 0,
   });
 
@@ -106,25 +122,39 @@ export function ChatMessages({
         {data?.pages.map((group, index) => (
           <Fragment key={index}>
             {group?.items.map((message: MessagesWithMemberWithProfile) => (
-              <ChatItem
+              <div
                 key={message.id}
-                currentMember={member}
-                member={message.member}
-                id={message.id}
-                content={message.content}
-                fileUrl={message.fileUrl}
-                fileName={message.fileName}
-                deleted={message.deleted}
-                timestamp={format(new Date(message.createdAt), DATE_FORMAT)}
-                isUpdated={message.updatedAt !== message.createdAt}
-                socketQuery={socketQuery}
-                socketUrl={socketUrl}
-                isPending={Boolean(message.isOptimistic)}
-              />
+                id={`message-${message.id}`}
+                className={
+                  message.id === highlightedMessageId
+                    ? 'bg-yellow-200/30 dark:bg-yellow-900/30'
+                    : ''
+                }
+              >
+                <ChatItem
+                  currentMember={member}
+                  member={message.member}
+                  id={message.id}
+                  content={message.content}
+                  fileUrl={message.fileUrl}
+                  fileName={message.fileName}
+                  deleted={message.deleted}
+                  timestamp={format(new Date(message.createdAt), DATE_FORMAT)}
+                  isUpdated={message.updatedAt !== message.createdAt}
+                  socketQuery={socketQuery}
+                  socketUrl={socketUrl}
+                  isPending={Boolean(message.isOptimistic)}
+                />
+              </div>
             ))}
           </Fragment>
         ))}
       </div>
+      {isFetchingPreviousPage && (
+        <div className="flex justify-center">
+          <Loader2 className="h-6 w-6 text-zinc-500 animate-spin my-4" />
+        </div>
+      )}
       <div ref={bottomRef} />
     </div>
   );

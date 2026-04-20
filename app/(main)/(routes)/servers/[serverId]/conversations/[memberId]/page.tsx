@@ -15,12 +15,13 @@ interface MemberIdPageProps {
   }>;
   searchParams: Promise<{
     video?: boolean;
+    messageId?: string;
   }>;
 }
 
 export default async function MemberIdPage({ params, searchParams }: MemberIdPageProps) {
   const { redirectToSignIn } = await auth();
-  const { video } = await searchParams;
+  const { video, messageId } = await searchParams;
   const profile = await currentProfile();
   if (!profile) return redirectToSignIn();
 
@@ -81,6 +82,7 @@ export default async function MemberIdPage({ params, searchParams }: MemberIdPag
             socketQuery={{
               conversationId: conversation.id,
             }}
+            messageId={messageId}
           />
           <ChatInput
             name={otherMember.profile.name}

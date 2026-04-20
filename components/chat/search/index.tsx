@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, Fragment, KeyboardEvent, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Loader2, Search, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,9 @@ import UserAvatar from '@/components/user-avatar';
 type SearchResultItem = {
   messageId: string;
   type: 'channel' | 'conversation';
+  serverId: string | null;
+  channelId: string | null;
+  conversationId: string | null;
   content: string;
   fileName: string | null;
   fileUrl: string | null;
@@ -120,6 +124,7 @@ const buildVisiblePages = (currentPage: number, totalPages: number) => {
 };
 
 export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatSearchProps) => {
+  const router = useRouter();
   const { getState, setState } = useServerSearchState();
 
   const [searchValue, setSearchValue] = useState('');
@@ -640,37 +645,58 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
 
               {!isSearching &&
                 !error &&
-                results.map((item) => (
-                  <div
-                    key={item.messageId}
-                    className="rounded-lg border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-[#313338]"
-                  >
-                    <div className="mb-1 flex items-center gap-2">
-                      <UserAvatar
-                        src={item.memberImageUrl || undefined}
-                        className="h-8 w-8 md:h-8 md:w-8"
-                      />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-                          {item.memberName}
-                        </p>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                          {new Date(item.createdAt).toLocaleString()}
-                        </p>
+                results.map((item) => {
+                  const handleResultClick = () => {
+                    const targetServerId = item.serverId || searchScope?.serverId;
+
+                    if (item.type === 'channel' && targetServerId && item.channelId) {
+                      router.push(
+                        `/servers/${targetServerId}/channels/${item.channelId}?messageId=${item.messageId}`,
+                      );
+                    } else if (
+                      item.type === 'conversation' &&
+                      targetServerId &&
+                      item.conversationId
+                    ) {
+                      router.push(
+                        `/servers/${targetServerId}/conversations/${item.conversationId}?messageId=${item.messageId}`,
+                      );
+                    }
+                  };
+
+                  return (
+                    <div
+                      key={item.messageId}
+                      onClick={handleResultClick}
+                      className="cursor-pointer rounded-lg border border-neutral-200 bg-white p-3 transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-[#313338] dark:hover:bg-[#2f3136]"
+                    >
+                      <div className="mb-1 flex items-center gap-2">
+                        <UserAvatar
+                          src={item.memberImageUrl || undefined}
+                          className="h-8 w-8 md:h-8 md:w-8"
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+                            {item.memberName}
+                          </p>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                            {new Date(item.createdAt).toLocaleString()}
+                          </p>
+                        </div>
                       </div>
-                    </div>
 
-                    {item.type === 'channel' && item.channelName && (
-                      <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        # {item.channelName}
+                      {item.type === 'channel' && item.channelName && (
+                        <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
+                          # {item.channelName}
+                        </p>
+                      )}
+
+                      <p className="wrap-break-word text-sm text-zinc-700 dark:text-zinc-200">
+                        {highlightText(item.content || '(attachment)', submittedQuery)}
                       </p>
-                    )}
-
-                    <p className="wrap-break-word text-sm text-zinc-700 dark:text-zinc-200">
-                      {highlightText(item.content || '(attachment)', submittedQuery)}
-                    </p>
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
             </div>
 
             {totalPages > 1 && (

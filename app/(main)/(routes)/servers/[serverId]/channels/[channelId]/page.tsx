@@ -13,11 +13,15 @@ interface PageProps {
     serverId: string;
     channelId: string;
   }>;
+  searchParams: Promise<{
+    messageId?: string;
+  }>;
 }
 
-const Page = async ({ params }: PageProps) => {
+const Page = async ({ params, searchParams }: PageProps) => {
   const { redirectToSignIn } = await auth();
   const { serverId, channelId } = await params;
+  const { messageId } = await searchParams;
 
   const profile = await currentProfile();
   if (!profile) return redirectToSignIn();
@@ -74,6 +78,7 @@ const Page = async ({ params }: PageProps) => {
             paramKey="channelId"
             chatId={channel.id}
             paramValue={channel.id}
+            messageId={messageId}
           />
           <ChatInput
             name={channel.name}

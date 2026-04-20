@@ -191,7 +191,7 @@ export function ChatItem({
           {!fileUrl && !isEditing && (
             <p
               className={cn(
-                'text-sm text-zinc-600 dark:text-zinc-300',
+                'text-sm text-zinc-600 dark:text-zinc-300 whitespace-pre-wrap break-words',
                 deleted && 'italic to-zinc-500 dark:text-zinc-400 text-xs mt-1',
               )}
             >

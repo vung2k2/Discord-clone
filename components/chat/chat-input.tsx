@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus } from 'lucide-react';
 import type { Member, Message, Profile } from '@/generated/prisma/client';
 
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useModal } from '@/hooks/use-modal.store';
 import { EmojiPicker } from '../emoji-picker';
 import { Field, FieldGroup } from '../ui/field';
@@ -200,9 +200,18 @@ export const ChatInput = ({ apiUrl, query, name, type, currentMember }: ChatInpu
                 >
                   <Plus className="text-white dark:text-[#313338]" />
                 </button>
-                <Input
-                  className="px-14 py-6 bg-zinc-200/90 dark:bg-zinc-700/75 border-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-zinc-600 dark:text-zinc-200"
+                <Textarea
+                  className="min-h-0 resize-none px-14 py-3 bg-zinc-200/90 dark:bg-zinc-700/75 border-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-zinc-600 dark:text-zinc-200"
                   placeholder={`Message ${type === 'conversation' ? name : '#' + name}`}
+                  rows={1}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) {
+                      return;
+                    }
+
+                    event.preventDefault();
+                    void form.handleSubmit(onSubmit)();
+                  }}
                   {...field}
                 />
                 <div className="absolute top-7 right-8">
