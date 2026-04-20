@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
   const apiKey = process.env.LIVEKIT_API_KEY;
   const apiSecret = process.env.LIVEKIT_API_SECRET;
-  const wsUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL;
+  const wsUrl = process.env.LIVEKIT_URL || process.env.NEXT_PUBLIC_LIVEKIT_URL;
 
   if (!apiKey || !apiSecret || !wsUrl) {
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
@@ -33,5 +33,5 @@ export async function GET(req: NextRequest) {
 
   const token = await at.toJwt();
 
-  return NextResponse.json({ token });
+  return NextResponse.json({ token, wsUrl });
 }

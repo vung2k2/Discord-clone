@@ -12,9 +12,16 @@ interface MediaRoomProps {
   audio: boolean;
 }
 
+type LiveKitTokenResponse = {
+  token?: string;
+  wsUrl?: string;
+  error?: string;
+};
+
 export function MediaRoom({ chatId, video, audio }: MediaRoomProps) {
   const { user } = useUser();
   const [token, setToken] = useState('');
+  const [serverUrl, setServerUrl] = useState('');
 
   useEffect(() => {
     if (!user?.id) return;
@@ -35,20 +42,25 @@ export function MediaRoom({ chatId, video, audio }: MediaRoomProps) {
           throw new Error(errorPayload?.error ?? 'Failed to create LiveKit token');
         }
 
-        const data = await response.json();
+        const data = (await response.json()) as LiveKitTokenResponse;
 
         if (typeof data.token !== 'string') {
           throw new Error('Invalid LiveKit token payload');
         }
 
+        if (typeof data.wsUrl !== 'string' || !data.wsUrl) {
+          throw new Error('Invalid LiveKit URL payload');
+        }
+
         setToken(data.token);
+        setServerUrl(data.wsUrl);
       } catch (error) {
         console.error(error);
       }
     })();
   }, [user?.id, user?.firstName, user?.username, chatId]);
 
-  if (token === '')
+  if (token === '' || serverUrl === '')
     return (
       <div className="flex flex-col flex-1 justify-center items-center">
         <Loader2 className="h-7 w-7 text-zinc-500 animate-spin my-4" />
@@ -62,7 +74,7 @@ export function MediaRoom({ chatId, video, audio }: MediaRoomProps) {
       audio={audio}
       token={token}
       connect={true}
-      serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+      serverUrl={serverUrl}
       data-lk-theme="default"
     >
       <VideoConference />

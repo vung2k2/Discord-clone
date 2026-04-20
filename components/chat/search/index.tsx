@@ -34,6 +34,7 @@ import {
   stripFilterTokens,
   withTrailingSpace,
 } from '@/components/chat/search/utils';
+import { useServerSearchState } from '@/components/provider/server-search-state-provider';
 import { useChatSearchHistory } from '@/hooks/use-chat-search-history';
 import UserAvatar from '@/components/user-avatar';
 
@@ -70,6 +71,20 @@ interface ChatSearchProps {
 
 type FilterMenuView = 'root' | 'from' | 'in';
 
+type PersistedSearchState = {
+  searchValue: string;
+  submittedQuery: string;
+  results: SearchResultItem[];
+  isSearchPanelOpen: boolean;
+  selectedFromUser: FilterUser | null;
+  selectedInChannel: FilterChannel | null;
+  sortBy: SortBy;
+  currentPage: number;
+  totalResults: number;
+  totalPages: number;
+  error: string;
+};
+
 const SEARCH_PAGE_SIZE = 10;
 
 const highlightText = (text: string, query: string) => {
@@ -105,6 +120,8 @@ const buildVisiblePages = (currentPage: number, totalPages: number) => {
 };
 
 export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatSearchProps) => {
+  const { getState, setState } = useServerSearchState();
+
   const [searchValue, setSearchValue] = useState('');
   const [submittedQuery, setSubmittedQuery] = useState('');
   const [results, setResults] = useState<SearchResultItem[]>([]);
@@ -122,6 +139,7 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
   const [totalResults, setTotalResults] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [error, setError] = useState('');
+  const [isCacheHydrated, setIsCacheHydrated] = useState(false);
 
   const canSearch = Boolean(
     searchScope?.serverId || searchScope?.channelId || searchScope?.conversationId,
@@ -139,26 +157,71 @@ export const ChatSearch = ({ type, name, email, serverName, searchScope }: ChatS
     return `Search in ${name === 'null null' ? email || 'conversation' : name}`;
   }, [type, name, email, searchScope?.serverId, serverName]);
 
-  const scopeKey = `${searchScope?.serverId || ''}:${searchScope?.channelId || ''}:${searchScope?.conversationId || ''}`;
+  const scopeKey = searchScope?.serverId
+    ? `server:${searchScope.serverId}`
+    : `${searchScope?.serverId || ''}:${searchScope?.channelId || ''}:${searchScope?.conversationId || ''}`;
   const { searchHistory, pushSearchHistory, clearAllHistory } = useChatSearchHistory(scopeKey);
 
   useEffect(() => {
-    setSearchValue('');
-    setSubmittedQuery('');
-    setResults([]);
-    setError('');
-    setIsSearchPanelOpen(false);
+    setIsCacheHydrated(false);
+
+    const persistedState = getState<PersistedSearchState>(scopeKey);
+
+    setSearchValue(persistedState?.searchValue || '');
+    setSubmittedQuery(persistedState?.submittedQuery || '');
+    setResults(persistedState?.results || []);
+    setError(persistedState?.error || '');
+    setIsSearchPanelOpen(Boolean(persistedState?.isSearchPanelOpen));
     setIsFilterMenuOpen(false);
     setFilterMenuView('root');
-    setSelectedFromUser(null);
-    setSelectedInChannel(null);
-    setSortBy('relevance');
-    setCurrentPage(1);
-    setTotalResults(0);
-    setTotalPages(0);
+    setSelectedFromUser(persistedState?.selectedFromUser || null);
+    setSelectedInChannel(persistedState?.selectedInChannel || null);
+    setSortBy(persistedState?.sortBy || 'relevance');
+    setCurrentPage(persistedState?.currentPage || 1);
+    setTotalResults(persistedState?.totalResults || 0);
+    setTotalPages(persistedState?.totalPages || 0);
     setFilterUsers([]);
     setFilterChannels([]);
-  }, [scopeKey]);
+
+    setIsCacheHydrated(true);
+  }, [getState, scopeKey]);
+
+  useEffect(() => {
+    if (!isCacheHydrated) {
+      return;
+    }
+
+    const nextState: PersistedSearchState = {
+      searchValue,
+      submittedQuery,
+      results,
+      isSearchPanelOpen,
+      selectedFromUser,
+      selectedInChannel,
+      sortBy,
+      currentPage,
+      totalResults,
+      totalPages,
+      error,
+    };
+
+    setState(scopeKey, nextState);
+  }, [
+    setState,
+    scopeKey,
+    isCacheHydrated,
+    searchValue,
+    submittedQuery,
+    results,
+    isSearchPanelOpen,
+    selectedFromUser,
+    selectedInChannel,
+    sortBy,
+    currentPage,
+    totalResults,
+    totalPages,
+    error,
+  ]);
 
   useEffect(() => {
     const fetchFilters = async () => {
